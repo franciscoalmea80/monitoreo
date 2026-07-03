@@ -112,7 +112,7 @@ async function actualizarPanel() {
             const ultimoRegistro = registros[0];
             
             // Revisa si en tu Kobo la pregunta se llama distinto a 'tipo_evento' (ej: 'comunidad', 'incidente')
-            const detalleAlerta = ultimoRegistro.tipo_evento || "Registro recibido en la base de datos";
+            const detalleAlerta = ultimoRegistro.tipo_de_evento || "Registro recibido en la base de datos";
             const fechaEnvio = ultimoRegistro._submission_time ? new Date(ultimoRegistro._submission_time).toLocaleString('es-VE') : "Sin fecha";
 
             document.getElementById('tipo-alerta').innerHTML = `
