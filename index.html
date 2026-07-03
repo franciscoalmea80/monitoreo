@@ -82,61 +82,62 @@
     <!-- Busca el final de tu archivo. Debe terminar exactamente con esta estructura: -->
 
     <script>
-        // ====== CONFIGURACIÓN DE TU REPOSITORIO KOBO ======
-        const TOKEN = '7776fe9104bd8319c91ff23b2e4ea87b28a18a60'; 
-        const FORM_UID = 'auNPWzZDtxfpYFTG8CwhC5';
+       // ====== CONFIGURACIÓN DE TU REPOSITORIO KOBO ======
+const TOKEN = '7776fe9104bd8319c91ff23b2e4ea87b28a18a60'; 
+const FORM_UID = 'auNPWzZDtxfpYFTG8CwhC5'; // <--- ¡Asegúrate de cambiar esto!
 
-        // Servidor por defecto (Si usas el Humanitario, cambia 'kf.kobotoolbox.org' por 'kobo.humanitarianresponse.info')
-        const URL_API = `https://kf.kobotoolbox.org/api/v2/assets/${FORM_UID}/data.json`;
+// Usamos la URL optimizada para datos públicos en formato JSON
+const URL_API = `https://kf.kobotoolbox.org/api/v2/assets/${FORM_UID}/data.json`;
 
-        async function actualizarPanel() {
-            const estadoTxt = document.getElementById('estado');
-            estadoTxt.innerText = "Sincronizando con KoboToolbox...";
+async function actualizarPanel() {
+    const estadoTxt = document.getElementById('estado');
+    estadoTxt.innerText = "Sincronizando con KoboToolbox...";
 
-            try {
-                const respuesta = await fetch(URL_API, {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Token ${TOKEN}`
-                    }
-                });
+    try {
+        // Al ser público, quitamos la cabecera de Autorización que a veces choca con CORS en servidores globales
+        const respuesta = await fetch(URL_API, { method: 'GET' });
 
-                if (!respuesta.ok) {
-                    throw new Error(`Error en la conexión: ${respuesta.status}`);
-                }
-
-                const data = await respuesta.json();
-                const registros = data.results;
-
-                document.getElementById('total-alertas').innerText = data.count;
-
-                if (registros && registros.length > 0) {
-                    const ultimoRegistro = registros[0];
-                    const detalleAlerta = ultimoRegistro.tipo_evento || "Registro recibido sin descripción";
-                    const fechaEnvio = new Date(ultimoRegistro._submission_time).toLocaleString('es-VE');
-
-                    document.getElementById('tipo-alerta').innerHTML = `
-                        <span style="font-size: 1.4rem; color: #e53e3e; display:block; margin-bottom:5px;">
-                            ${detalleAlerta}
-                        </span>
-                        <span style="font-size: 0.9rem; color: #718096;">
-                            Enviado: ${fechaEnvio}
-                        </span>
-                    `;
-                } else {
-                    document.getElementById('tipo-alerta').innerText = "No hay registros cargados aún.";
-                }
-
-                estadoTxt.innerText = "Datos sincronizados en tiempo real con éxito.";
-
-            } catch (error) {
-                console.error("Detalle del error:", error);
-                estadoTxt.innerText = "Error al conectar. Revisa el Token, el UID o la consola del navegador.";
-            }
+        if (!respuesta.ok) {
+            throw new Error(`Código ${respuesta.status} (${respuesta.statusText})`);
         }
 
-        actualizarPanel();
-        setInterval(actualizarPanel, 30000);
+        const data = await respuesta.json();
+        const registros = data.results;
+
+        // 1. Mostrar total de reportes
+        document.getElementById('total-alertas').innerText = data.count || 0;
+
+        // 2. Mostrar último registro
+        if (registros && registros.length > 0) {
+            const ultimoRegistro = registros[0];
+            
+            // Revisa si en tu Kobo la pregunta se llama distinto a 'tipo_evento' (ej: 'comunidad', 'incidente')
+            const detalleAlerta = ultimoRegistro.tipo_evento || "Registro recibido en la base de datos";
+            const fechaEnvio = ultimoRegistro._submission_time ? new Date(ultimoRegistro._submission_time).toLocaleString('es-VE') : "Sin fecha";
+
+            document.getElementById('tipo-alerta').innerHTML = `
+                <span style="font-size: 1.4rem; color: #e53e3e; display:block; margin-bottom:5px;">
+                    ${detalleAlerta}
+                </span>
+                <span style="font-size: 0.9rem; color: #718096;">
+                    Enviado: ${fechaEnvio}
+                </span>
+            `;
+        } else {
+            document.getElementById('tipo-alerta').innerText = "No hay registros cargados aún.";
+        }
+
+        estadoTxt.innerText = "Datos sincronizados con éxito.";
+
+    } catch (error) {
+        console.error("Detalle del error:", error);
+        estadoTxt.innerText = `Error al conectar: ${error.message}. Verifica el UID del formulario.`;
+    }
+}
+
+// Inicializar y temporizador
+actualizarPanel();
+setInterval(actualizarPanel, 30000);
     </script>
 
 </body>
