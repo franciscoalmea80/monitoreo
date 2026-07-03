@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sala de Monitoreo - Tiempo Real</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f4f8;
+            color: #2d3748;
+            margin: 0;
+            padding: 20px;
+        }
+        .header {
+            background-color: #004080;
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        .header h1 { margin: 0; font-size: 1.8rem; }
+        .header p { margin: 5px 0 0 0; opacity: 0.9; }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border-top: 4px solid #004080;
+        }
+        .card h3 { margin: 0 0 10px 0; color: #4a5568; font-size: 1.1rem; }
+        .card .dato { font-size: 2.2rem; font-weight: bold; color: #004080; }
+        
+        .btn-actualizar {
+            background-color: #004080;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        .btn-actualizar:hover { background-color: #002d5a; }
+        .status { margin-top: 10px; font-size: 0.9rem; color: #718096; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>SISTEMA DE MONITOREO EN TIEMPO REAL</h1>
+        <p>Coordinación de Gestión de Riesgos y Alertas</p>
+    </div>
+
+    <div class="grid">
+        <!-- Indicador 1 -->
+        <div class="card">
+            <h3>Total Reportes Recibidos</h3>
+            <div class="dato" id="total-alertas">0</div>
+        </div>
+
+        <!-- Indicador 2 -->
+        <div class="card">
+            <h3>Última Alerta Registrada</h3>
+            <div class="dato" id="tipo-alerta" style="font-size: 1.3rem; padding-top: 10px;">Esperando datos...</div>
+        </div>
+    </div>
+
+    <button class="btn-actualizar" onclick="actualizarPanel()">Actualizar Ahora</button>
+    <div class="status" id="estado">Página lista. Esperando conexión...</div>
+
+    <!-- Busca el final de tu archivo. Debe terminar exactamente con esta estructura: -->
+
+    <script>
+        // ====== CONFIGURACIÓN DE TU REPOSITORIO KOBO ======
+        const TOKEN = '7776fe9104bd8319c91ff23b2e4ea87b28a18a60'; 
+        const FORM_UID = 'auNPWzZDtxfpYFTG8CwhC5';
+
+        // Servidor por defecto (Si usas el Humanitario, cambia 'kf.kobotoolbox.org' por 'kobo.humanitarianresponse.info')
+        const URL_API = `https://kf.kobotoolbox.org/api/v2/assets/${FORM_UID}/data.json`;
+
+        async function actualizarPanel() {
+            const estadoTxt = document.getElementById('estado');
+            estadoTxt.innerText = "Sincronizando con KoboToolbox...";
+
+            try {
+                const respuesta = await fetch(URL_API, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Token ${TOKEN}`
+                    }
+                });
+
+                if (!respuesta.ok) {
+                    throw new Error(`Error en la conexión: ${respuesta.status}`);
+                }
+
+                const data = await respuesta.json();
+                const registros = data.results;
+
+                document.getElementById('total-alertas').innerText = data.count;
+
+                if (registros && registros.length > 0) {
+                    const ultimoRegistro = registros[0];
+                    const detalleAlerta = ultimoRegistro.tipo_evento || "Registro recibido sin descripción";
+                    const fechaEnvio = new Date(ultimoRegistro._submission_time).toLocaleString('es-VE');
+
+                    document.getElementById('tipo-alerta').innerHTML = `
+                        <span style="font-size: 1.4rem; color: #e53e3e; display:block; margin-bottom:5px;">
+                            ${detalleAlerta}
+                        </span>
+                        <span style="font-size: 0.9rem; color: #718096;">
+                            Enviado: ${fechaEnvio}
+                        </span>
+                    `;
+                } else {
+                    document.getElementById('tipo-alerta').innerText = "No hay registros cargados aún.";
+                }
+
+                estadoTxt.innerText = "Datos sincronizados en tiempo real con éxito.";
+
+            } catch (error) {
+                console.error("Detalle del error:", error);
+                estadoTxt.innerText = "Error al conectar. Revisa el Token, el UID o la consola del navegador.";
+            }
+        }
+
+        actualizarPanel();
+        setInterval(actualizarPanel, 30000);
+    </script>
+
+</body>
+</html>
+
+</body>
+</html>
